@@ -1,20 +1,44 @@
 import { useState, useEffect } from 'react';
 import { useUser } from '../../context/UserContext';
-import { useCart } from '../../context/CartContext';
 import { Link } from 'react-router-dom';
+import { getCart } from '../../services/api';
 
 const UserDashboard = () => {
   const { user, logout } = useUser();
-  const { cartItems, cartTotal } = useCart();
+  const [cartItems, setCartItems] = useState([]);
+  const [cartTotal, setCartTotal] = useState(0);
   const [recentOrders, setRecentOrders] = useState([]);
   const [wishlist, setWishlist] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // TODO: Fetch user's recent orders and wishlist from API
-    // For now, using placeholder data
-    setRecentOrders([]);
-    setWishlist([]);
-  }, []);
+    const fetchUserData = async () => {
+      if (user) {
+        try {
+          // Fetch cart data
+          const cart = await getCart();
+          setCartItems(cart.items || []);
+          setCartTotal(cart.total || 0);
+          
+          // TODO: Fetch user's recent orders and wishlist from API
+          // For now, using placeholder data
+          setRecentOrders([]);
+          setWishlist([]);
+        } catch (error) {
+          console.error('Error fetching user data:', error);
+          setCartItems([]);
+          setCartTotal(0);
+        }
+      }
+      setLoading(false);
+    };
+
+    fetchUserData();
+  }, [user]);
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
 
   if (!user) {
     return <div>Loading...</div>;
@@ -88,10 +112,10 @@ const UserDashboard = () => {
             <div className="cart-preview">
               <div className="cart-items-preview">
                 {cartItems.slice(0, 3).map(item => (
-                  <div key={item.id} className="cart-item-preview">
-                    <img src={item.image} alt={item.title} />
+                  <div key={item.product._id} className="cart-item-preview">
+                    <img src={item.product.images[0]} alt={item.product.name} />
                     <div className="item-details">
-                      <span className="item-title">{item.title}</span>
+                      <span className="item-title">{item.product.name}</span>
                       <span className="item-price">₹{item.price}</span>
                     </div>
                   </div>

@@ -1,30 +1,46 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAdmin } from '../context/AdminContext';
-import { useCart } from '../context/CartContext';
-import { categories } from '../data/sampleProducts';
+import { useUser } from '../context/UserContext';
 import ProductCard from '../components/ProductCard';
 
 const HomePage = () => {
-  const { products } = useAdmin();
+  const { user } = useUser();
   const navigate = useNavigate();
+  const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
   const dropdownRef = useRef(null);
 
-  // Only use admin-added products, no sample products
-  const displayProducts = products;
+  const categories = ['All', 'Paintings', 'Bottle Art', 'Sketches', 'Portraits', 'Digital Art', 'Sculptures'];
+
+  // Fetch products from API
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const response = await fetch('http://localhost:5003/api/products');
+        const data = await response.json();
+        setProducts(data.products || []);
+      } catch (error) {
+        console.error('Error fetching products:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
 
   useEffect(() => {
     if (selectedCategory === 'All') {
-      setFilteredProducts(displayProducts);
+      setFilteredProducts(products);
     } else {
       setFilteredProducts(
-        displayProducts.filter(product => product.category === selectedCategory)
+        products.filter(product => product.category === selectedCategory)
       );
     }
-  }, [selectedCategory, displayProducts]);
+  }, [selectedCategory, products]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -49,7 +65,7 @@ const HomePage = () => {
     <div className="homepage-container">
       {/* Hero Section */}
       <section className="hero">
-        <h1>Welcome to Handmade Artician Gallery</h1>
+        <h1>Welcome to Handmade Artisan Gallery</h1>
         <p>Discover unique handcrafted paintings, bottle art, sketches, and portraits that will transform your living space into a masterpiece.</p>
       </section>
 
@@ -87,28 +103,23 @@ const HomePage = () => {
         ))}
       </div>
 
-      {filteredProducts.length === 0 && (
+      {loading ? (
+        <div style={{ textAlign: 'center', padding: '4rem 2rem' }}>
+          <h3>Loading products...</h3>
+        </div>
+      ) : filteredProducts.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '4rem 2rem' }}>
           <h3 style={{ color: '#6c757d', marginBottom: '1rem' }}>
             {products.length === 0 ? 'No products available yet' : 'No products found in this category'}
           </h3>
           <p style={{ color: '#6c757d', marginBottom: '2rem' }}>
             {products.length === 0 
-              ? 'Please add some products through the admin panel to get started.' 
+              ? 'Sellers will add products soon. Check back later!' 
               : 'Try selecting a different category or check back later.'
             }
           </p>
-          {products.length === 0 && (
-            <button 
-              className="add-to-cart-btn"
-              onClick={() => navigate('/admin')}
-              style={{ maxWidth: '200px' }}
-            >
-              Go to Admin Panel
-            </button>
-          )}
         </div>
-      )}
+      ) : null}
     </div>
   );
 };

@@ -1,11 +1,31 @@
 import { Link } from 'react-router-dom';
 import { ShoppingCart } from 'lucide-react';
-import { useCart } from '../context/CartContext';
 import { useUser } from '../context/UserContext';
+import { useState, useEffect } from 'react';
+import { getCart } from '../services/api';
 
 const Header = () => {
-  const { getTotalItems } = useCart();
   const { user, logout } = useUser();
+  const [cartItemCount, setCartItemCount] = useState(0);
+
+  useEffect(() => {
+    const fetchCartCount = async () => {
+      if (user) {
+        try {
+          const response = await getCart();
+          const totalItems = response.data.cart.items.reduce((total, item) => total + item.quantity, 0);
+          setCartItemCount(totalItems);
+        } catch (error) {
+          console.error('Error fetching cart:', error);
+          setCartItemCount(0);
+        }
+      } else {
+        setCartItemCount(0);
+      }
+    };
+
+    fetchCartCount();
+  }, [user]);
 
   return (
     <header className="header">
@@ -38,8 +58,8 @@ const Header = () => {
           {/* Cart (always visible) */}
           <Link to="/cart" className="cart-icon">
             <ShoppingCart size={24} />
-            {getTotalItems() > 0 && (
-              <span className="cart-badge">{getTotalItems()}</span>
+            {cartItemCount > 0 && (
+              <span className="cart-badge">{cartItemCount}</span>
             )}
           </Link>
           

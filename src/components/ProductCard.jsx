@@ -1,6 +1,7 @@
-import { useCart } from '../context/CartContext';
+import { useUser } from '../context/UserContext';
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { addToCart } from '../services/api';
 
 function convertGoogleDriveLink(url) {
   if (!url) return '';
@@ -14,7 +15,8 @@ function convertGoogleDriveLink(url) {
 }
 
 const ProductCard = ({ product }) => {
-  const { addToCart } = useCart();
+  const { user } = useUser();
+  const navigate = useNavigate();
   // Handle both single image and multiple images
   const images = Array.isArray(product.images) && product.images.length > 0 
     ? product.images 
@@ -25,9 +27,21 @@ const ProductCard = ({ product }) => {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
 
-  const handleAddToCart = (e) => {
+  const handleAddToCart = async (e) => {
     e.stopPropagation();
-    addToCart(product);
+    e.preventDefault();
+    
+    if (!user) {
+      navigate('/signin');
+      return;
+    }
+
+    try {
+      await addToCart({ productId: product._id, quantity: 1 });
+      // You could show a success message here
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+    }
   };
 
   const handleImageLoad = () => {
@@ -53,7 +67,7 @@ const ProductCard = ({ product }) => {
   };
 
   return (
-    <Link to={`/product/${product.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+    <Link to={`/product/${product._id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
       <div className="product-card">
         <div className="product-image-container" style={{ position: 'relative' }}>
           {!imageLoaded && (
@@ -62,14 +76,14 @@ const ProductCard = ({ product }) => {
             </div>
           )}
           {images.length > 0 ? (
-            <img
-              src={convertGoogleDriveLink(images[currentImage])}
-              alt={product.title}
-              className={`product-image ${imageLoaded ? 'loaded' : ''}`}
-              onLoad={handleImageLoad}
-              onError={handleImageError}
-              style={{ display: imageLoaded && !imageError ? 'block' : 'none' }}
-            />
+                      <img
+            src={convertGoogleDriveLink(images[currentImage])}
+            alt={product.name || product.title}
+            className={`product-image ${imageLoaded ? 'loaded' : ''}`}
+            onLoad={handleImageLoad}
+            onError={handleImageError}
+            style={{ display: imageLoaded && !imageError ? 'block' : 'none' }}
+          />
           ) : null}
           
           {(imageError || images.length === 0) && (
@@ -102,8 +116,8 @@ const ProductCard = ({ product }) => {
           )}
         </div>
         <div className="product-info">
-          <h3 className="product-title">{product.title}</h3>
-          <div className="product-price">₹{product.price.toFixed(2)}</div>
+          <h3 className="product-title">{product.name || product.title}</h3>
+          <div className="product-price">${product.price.toFixed(2)}</div>
           <p className="product-description">
             {product.description.length > 100
               ? `${product.description.substring(0, 100)}...`
