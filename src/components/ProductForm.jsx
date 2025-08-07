@@ -76,7 +76,7 @@ const ProductForm = () => {
         formData.append('images', file);
       });
 
-      const response = await fetch('http://localhost:5003/upload', {
+      const response = await fetch(`${getBaseURL()}/upload`, {
         method: 'POST',
         body: formData
       });

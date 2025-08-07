@@ -2,14 +2,18 @@ import { createContext, useContext, useState, useEffect } from 'react';
 import { getProfile } from '../services/api';
 import { clearAuthData, checkAuthStatus } from '../utils/clearAuth';
 
-const UserContext = createContext();
+export const UserContext = createContext({
+  user: null,
+  token: null,
+  login: () => {},
+  logout: () => {},
+  updateUser: () => {},
+  loading: true
+});
 
 export const UserProvider = ({ children }) => {
-  const [user, setUser] = useState(() => {
-    const stored = localStorage.getItem('user');
-    return stored ? JSON.parse(stored) : null;
-  });
-  const [token, setToken] = useState(() => localStorage.getItem('token') || null);
+  const [user, setUser] = useState(null);
+  const [token, setToken] = useState(null);
   const [loading, setLoading] = useState(true);
 
   // Verify token and get user profile on app start
@@ -102,8 +106,8 @@ export const UserProvider = ({ children }) => {
 
 export const useUser = () => {
   const context = useContext(UserContext);
-  if (!context) {
+  if (context === undefined) {
     throw new Error('useUser must be used within a UserProvider');
   }
   return context;
-}; 
+};

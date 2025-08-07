@@ -19,9 +19,8 @@ const HomePage = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await fetch('http://localhost:5003/api/products');
-        const data = await response.json();
-        setProducts(data.products || []);
+        const response = await getProducts();
+        setProducts(response.data.products || []);
       } catch (error) {
         console.error('Error fetching products:', error);
       } finally {

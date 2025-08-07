@@ -11,10 +11,10 @@ const getBaseURL = () => {
   if (window.location.hostname === 'handmade-art-gallery.onrender.com' || 
       window.location.hostname === 'handmade-art-gallery-frontend.onrender.com' ||
       window.location.hostname === 'handmadeartgallery.vercel.app') {
-    return 'https://handmade-art-gallery.onrender.com/api';
+    return 'https://handmade-art-gallery-backend.onrender.com/api';
   }
   // Development environment
-  return 'http://localhost:3000/api';
+  return 'http://localhost:5000/api';
 };
 
 const API = axios.create({ 
